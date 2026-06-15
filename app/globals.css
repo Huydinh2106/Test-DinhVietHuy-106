@@ -212,7 +212,7 @@ button {
 }
 
 .feedItem {
-  --desktop-video-width: min(430px, calc((100dvh - 40px) * 9 / 16), calc(100vw - var(--nav-width) - var(--nav-width) - 48px));
+  --desktop-video-width: min(520px, calc((100dvh - 40px) * 9 / 16), calc(100vw - var(--nav-width) - var(--nav-width) - 48px));
   min-height: 100dvh;
   scroll-snap-align: start;
   scroll-snap-stop: always;
