@@ -1,24 +1,16 @@
 "use client";
 
+import Image from "next/image";
 import {
-  Bookmark,
-  Clapperboard,
   Compass,
-  Heart,
   Home,
-  MessageCircle,
-  MoreHorizontal,
-  Music2,
   Pause,
   Play,
-  Search,
-  Send,
-  SquarePlus,
   UserRound,
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type SVGProps, useEffect, useMemo, useRef, useState } from "react";
 
 type VideoItem = {
   id: string;
@@ -27,6 +19,8 @@ type VideoItem = {
   description: string;
   likesCount: number;
 };
+
+type NavView = "home" | "discover" | "profile";
 
 const mockVideos: VideoItem[] = [
   {
@@ -60,21 +54,12 @@ const mockVideos: VideoItem[] = [
 ];
 
 const navItems = [
-  { label: "Trang chủ", icon: Home },
-  { label: "Tìm kiếm", icon: Search },
-  { label: "Khám phá", icon: Compass },
-  { label: "Reels", icon: Clapperboard },
-  { label: "Tạo mới", icon: SquarePlus },
-  { label: "Hồ sơ", icon: UserRound },
-];
+  { id: "home", label: "Trang chủ", icon: Home },
+  { id: "discover", label: "Khám phá", icon: Compass },
+  { id: "profile", label: "Hồ sơ", icon: UserRound },
+] as const satisfies ReadonlyArray<{ id: NavView; label: string; icon: typeof Home }>;
 
-const mobileNavItems = [
-  { label: "Trang chủ", icon: Home },
-  { label: "Khám phá", icon: Compass },
-  { label: "Tạo mới", icon: SquarePlus },
-  { label: "Reels", icon: Clapperboard },
-  { label: "Hồ sơ", icon: UserRound },
-];
+const mobileNavItems = navItems;
 
 function formatCount(count: number) {
   return new Intl.NumberFormat("vi-VN").format(count);
@@ -89,12 +74,46 @@ function getInitials(name: string) {
     .toUpperCase();
 }
 
+function HeartFilledIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" {...props}>
+      <path d="M12 21.25 10.58 20C5.36 15.36 2 12.38 2 8.72 2 5.73 4.34 3.4 7.32 3.4c1.68 0 3.3.78 4.36 2.02A5.72 5.72 0 0 1 16.04 3.4C19.02 3.4 21.36 5.73 21.36 8.72c0 3.66-3.36 6.64-8.58 11.28L12 21.25Z" />
+    </svg>
+  );
+}
+
+function ChatFilledIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" {...props}>
+      <path d="M12.1 3.25c5.2 0 9.4 3.62 9.4 8.08 0 4.45-4.2 8.07-9.4 8.07-.96 0-1.9-.12-2.78-.36l-4.46 2.08a.72.72 0 0 1-.98-.86l1.13-3.52a7.55 7.55 0 0 1-2.31-5.41c0-4.46 4.2-8.08 9.4-8.08Zm-3.63 7.36a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1Zm3.63 0a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1Zm3.63 0a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1Z" />
+    </svg>
+  );
+}
+
+function BookmarkFilledIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" {...props}>
+      <path d="M6.8 3h10.4c1 0 1.8.8 1.8 1.8v15.74a.7.7 0 0 1-1.08.58L12 17.3l-5.92 3.82A.7.7 0 0 1 5 20.54V4.8C5 3.8 5.8 3 6.8 3Z" />
+    </svg>
+  );
+}
+
+function PaperPlaneFilledIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" {...props}>
+      <path d="M3.48 2.4a.75.75 0 0 0-.93.94l2.43 7.91h8.52a.75.75 0 0 1 0 1.5H4.98l-2.43 7.9a.75.75 0 0 0 .93.95 60.6 60.6 0 0 0 18.44-8.99.75.75 0 0 0 0-1.22A60.6 60.6 0 0 0 3.48 2.4Z" />
+    </svg>
+  );
+}
+
 export default function VideoFeed() {
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
-  const [activeId, setActiveId] = useState(mockVideos[0].id);
+  const [activeView, setActiveView] = useState<NavView>("home");
   const [manualPausedIds, setManualPausedIds] = useState<Set<string>>(() => new Set());
   const [muted, setMuted] = useState(true);
   const [likedIds, setLikedIds] = useState<Set<string>>(() => new Set());
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(() => new Set());
+  const [progressById, setProgressById] = useState<Record<string, number>>({});
 
   const likesById = useMemo(() => {
     return mockVideos.reduce<Record<string, number>>((acc, video) => {
@@ -103,7 +122,39 @@ export default function VideoFeed() {
     }, {});
   }, [likedIds]);
 
+  const bookmarksById = useMemo(() => {
+    return mockVideos.reduce<Record<string, number>>((acc, video) => {
+      acc[video.id] = Math.floor(video.likesCount * 0.4) + (bookmarkedIds.has(video.id) ? 1 : 0);
+      return acc;
+    }, {});
+  }, [bookmarkedIds]);
+
   useEffect(() => {
+    if (activeView !== "home") {
+      Object.values(videoRefs.current).forEach((video) => video?.pause());
+      return;
+    }
+
+    function getVisibleRatio(element: HTMLElement) {
+      const rect = element.getBoundingClientRect();
+      const visibleHeight = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+
+      return Math.max(0, visibleHeight) / rect.height;
+    }
+
+    function playMostVisibleVideo() {
+      const cards = Array.from(document.querySelectorAll<HTMLElement>("[data-video-id]"));
+      const visibleCard = cards.find((card) => getVisibleRatio(card) >= 0.72);
+      const id = visibleCard?.getAttribute("data-video-id");
+      const video = id ? videoRefs.current[id] : null;
+
+      if (!id || !video || manualPausedIds.has(id)) {
+        return;
+      }
+
+      void video.play().catch(() => undefined);
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -115,8 +166,6 @@ export default function VideoFeed() {
           }
 
           if (entry.isIntersecting) {
-            setActiveId(id);
-
             if (!manualPausedIds.has(id)) {
               void video.play().catch(() => undefined);
             }
@@ -130,9 +179,13 @@ export default function VideoFeed() {
 
     const cards = document.querySelectorAll<HTMLElement>("[data-video-id]");
     cards.forEach((card) => observer.observe(card));
+    const frameId = window.requestAnimationFrame(playMostVisibleVideo);
 
-    return () => observer.disconnect();
-  }, [manualPausedIds]);
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      observer.disconnect();
+    };
+  }, [activeView, manualPausedIds]);
 
   useEffect(() => {
     Object.values(videoRefs.current).forEach((video) => {
@@ -176,16 +229,55 @@ export default function VideoFeed() {
     });
   }
 
+  function toggleBookmark(videoId: string) {
+    setBookmarkedIds((current) => {
+      const next = new Set(current);
+
+      if (next.has(videoId)) {
+        next.delete(videoId);
+      } else {
+        next.add(videoId);
+      }
+
+      return next;
+    });
+  }
+
+  function updateVideoProgress(videoId: string) {
+    const video = videoRefs.current[videoId];
+
+    if (!video || !Number.isFinite(video.duration) || video.duration <= 0) {
+      return;
+    }
+
+    setProgressById((current) => ({
+      ...current,
+      [videoId]: Math.min(video.currentTime / video.duration, 1),
+    }));
+  }
+
   return (
     <main className="appShell">
       <aside className="sideNav" aria-label="Điều hướng chính">
         <div className="brandLockup">
-          <span className="brandMark">V</span>
-          <span className="brandText">V-Feed</span>
+          <Image
+            className="brandLogo"
+            src="/veody-logo-horizontal.svg"
+            alt="Veody"
+            width={180}
+            height={90}
+            priority
+          />
         </div>
         <nav className="navList">
-          {navItems.map(({ label, icon: Icon }, index) => (
-            <button className={index === 0 ? "navItem navItemActive" : "navItem"} key={label}>
+          {navItems.map(({ id, label, icon: Icon }) => (
+            <button
+              className={activeView === id ? "navItem navItemActive" : "navItem"}
+              key={id}
+              type="button"
+              onClick={() => setActiveView(id)}
+              aria-current={activeView === id ? "page" : undefined}
+            >
               <Icon aria-hidden="true" size={22} strokeWidth={2.2} />
               <span>{label}</span>
             </button>
@@ -200,10 +292,13 @@ export default function VideoFeed() {
         </button>
       </aside>
 
-      <section className="feedViewport" aria-label="Danh sách video cuộn dọc">
-        {mockVideos.map((video, index) => {
+      <section
+        className={activeView === "home" ? "feedViewport" : "feedViewport feedViewportStatic"}
+        aria-label={activeView === "home" ? "Danh sách video cuộn dọc" : "Trang đang phát triển"}
+      >
+        {activeView === "home" ? (
+          mockVideos.map((video, index) => {
           const isLiked = likedIds.has(video.id);
-          const isActive = activeId === video.id;
           const isManualPaused = manualPausedIds.has(video.id);
 
           return (
@@ -223,9 +318,12 @@ export default function VideoFeed() {
                     src={video.videoUrl}
                     muted={muted}
                     loop
+                    autoPlay={index === 0}
                     playsInline
                     preload={index === 0 ? "auto" : "metadata"}
                     poster=""
+                    onLoadedMetadata={() => updateVideoProgress(video.id)}
+                    onTimeUpdate={() => updateVideoProgress(video.id)}
                   />
                   <span className={isManualPaused ? "playState playStateVisible" : "playState"}>
                     {isManualPaused ? (
@@ -235,16 +333,6 @@ export default function VideoFeed() {
                     )}
                   </span>
                 </button>
-
-                <div className="topBar">
-                  <span className="reelTitle">
-                    <Clapperboard aria-hidden="true" size={18} />
-                    Reels
-                  </span>
-                  <span className={isActive ? "statusPill statusPillActive" : "statusPill"}>
-                    {isActive ? "Đang phát" : "Sẵn sàng"}
-                  </span>
-                </div>
 
                 <button
                   className="muteButton"
@@ -261,65 +349,85 @@ export default function VideoFeed() {
                 </button>
 
                 <div className="videoMeta">
-                  <div className="authorRow">
-                    <span className="avatarRing" aria-hidden="true">
-                      <span>{getInitials(video.authorName)}</span>
-                    </span>
-                    <p className="author">@{video.authorName}</p>
-                    <button className="followButton" type="button">
-                      Theo dõi
-                    </button>
-                  </div>
+                  <p className="author">{video.authorName}</p>
                   <p className="description">{video.description}</p>
-                  <p className="soundLine">
-                    <Music2 aria-hidden="true" size={14} />
-                    Nhạc gốc - {video.authorName}
-                  </p>
                 </div>
 
-                <div className="actionRail" aria-label="Tương tác video">
-                  <button
-                    className={isLiked ? "actionButton actionButtonLiked" : "actionButton"}
-                    type="button"
-                    onClick={() => toggleLike(video.id)}
-                    aria-label={isLiked ? "Bỏ thích" : "Thích video"}
-                    title={isLiked ? "Bỏ thích" : "Thích"}
-                  >
-                    <Heart aria-hidden="true" size={24} fill={isLiked ? "currentColor" : "none"} />
-                    <span>{formatCount(likesById[video.id])}</span>
-                  </button>
-                  <button className="actionButton" type="button" aria-label="Bình luận" title="Bình luận">
-                    <MessageCircle aria-hidden="true" size={24} />
-                    <span>{index + 18}</span>
-                  </button>
-                  <button className="actionButton" type="button" aria-label="Chia sẻ" title="Chia sẻ">
-                    <Send aria-hidden="true" size={24} />
-                    <span>Chia sẻ</span>
-                  </button>
-                  <button className="actionButton actionButtonIconOnly" type="button" aria-label="Lưu" title="Lưu">
-                    <Bookmark aria-hidden="true" size={24} />
-                  </button>
-                  <button
-                    className="actionButton actionButtonIconOnly"
-                    type="button"
-                    aria-label="Tùy chọn khác"
-                    title="Tùy chọn khác"
-                  >
-                    <MoreHorizontal aria-hidden="true" size={24} />
-                  </button>
-                  <span className="creatorDisc" aria-hidden="true">
-                    {getInitials(video.authorName)}
-                  </span>
+                <div className="videoProgressTrack" aria-hidden="true">
+                  <span
+                    className="videoProgressFill"
+                    style={{ transform: `scaleX(${progressById[video.id] ?? 0})` }}
+                  />
                 </div>
+              </div>
+
+              <div className="actionRail" aria-label="Tương tác video">
+                <div className="actionAvatarContainer">
+                  <span className="actionAvatar">
+                    <span>{getInitials(video.authorName)}</span>
+                  </span>
+                  <button className="actionFollowButton" type="button">+</button>
+                </div>
+
+                <button
+                  className={isLiked ? "actionButton actionButtonLiked" : "actionButton"}
+                  type="button"
+                  onClick={() => toggleLike(video.id)}
+                  aria-label={isLiked ? "Bỏ thích" : "Thích video"}
+                  title={isLiked ? "Bỏ thích" : "Thích"}
+                >
+                  <div className="actionIconWrapper">
+                    <HeartFilledIcon aria-hidden="true" className="actionGlyph" />
+                  </div>
+                  <span>{formatCount(likesById[video.id])}</span>
+                </button>
+
+                <button className="actionButton" type="button" aria-label="Bình luận" title="Bình luận">
+                  <div className="actionIconWrapper">
+                    <ChatFilledIcon aria-hidden="true" className="actionGlyph" />
+                  </div>
+                  <span>{formatCount(index + 188)}</span>
+                </button>
+
+                <button
+                  className={bookmarkedIds.has(video.id) ? "actionButton actionButtonBookmarked" : "actionButton"}
+                  type="button"
+                  onClick={() => toggleBookmark(video.id)}
+                  aria-label={bookmarkedIds.has(video.id) ? "Bỏ lưu" : "Lưu video"}
+                  title={bookmarkedIds.has(video.id) ? "Bỏ lưu" : "Lưu"}
+                >
+                  <div className="actionIconWrapper">
+                    <BookmarkFilledIcon aria-hidden="true" className="actionGlyph" />
+                  </div>
+                  <span>{formatCount(bookmarksById[video.id])}</span>
+                </button>
+
+                <button className="actionButton" type="button" aria-label="Chia sẻ" title="Chia sẻ">
+                  <div className="actionIconWrapper">
+                    <PaperPlaneFilledIcon aria-hidden="true" className="actionGlyph" />
+                  </div>
+                  <span>{formatCount(index + 35)}</span>
+                </button>
               </div>
             </article>
           );
-        })}
+        })
+        ) : (
+          <div className="developmentView" role="status">
+            <p>Đang trong quá trình phát triển</p>
+          </div>
+        )}
       </section>
 
       <nav className="bottomNav" aria-label="Điều hướng mobile">
-        {mobileNavItems.map(({ label, icon: Icon }, index) => (
-          <button className={index === 0 ? "bottomNavItem bottomNavItemActive" : "bottomNavItem"} key={label}>
+        {mobileNavItems.map(({ id, label, icon: Icon }) => (
+          <button
+            className={activeView === id ? "bottomNavItem bottomNavItemActive" : "bottomNavItem"}
+            key={id}
+            type="button"
+            onClick={() => setActiveView(id)}
+            aria-current={activeView === id ? "page" : undefined}
+          >
             <Icon aria-hidden="true" size={22} strokeWidth={2.2} />
             <span>{label}</span>
           </button>
