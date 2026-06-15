@@ -218,6 +218,7 @@ button {
   scroll-snap-stop: always;
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--desktop-video-width) minmax(0, 1fr);
+  align-content: center;
   align-items: flex-end;
   column-gap: 16px;
   padding: 20px 24px;
