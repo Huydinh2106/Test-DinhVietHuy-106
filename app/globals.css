@@ -318,88 +318,133 @@ a:hover {
   flex-wrap: wrap;
 }
 
-/* Bảng văn bản chung */
+/* Chia sẻ file */
 
-.boardHead {
+.dropZone {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  justify-content: center;
+  gap: 4px;
+  padding: 36px 20px;
+  border: 2px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-soft);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.syncDot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex: none;
-  background: var(--muted);
+.dropZone:hover,
+.dropZone:focus-visible {
+  border-color: var(--accent);
+  outline: none;
 }
 
-.syncDot.ok {
-  background: #29cc6a;
+.dropZone.dragOver {
+  border-color: var(--accent);
+  background: rgba(79, 140, 255, 0.12);
 }
 
-.syncDot.pending {
-  background: #f5a623;
+.dropIcon {
+  font-size: 26px;
 }
 
-.syncLabel {
+.dropTitle {
+  margin: 6px 0 0;
+  font-weight: 600;
+}
+
+.dropHint {
+  margin: 0;
   color: var(--muted);
-  font-size: 13.5px;
+  font-size: 13px;
 }
 
-.boardArea {
-  min-height: 340px;
-}
-
-.boardFooter {
+.fileListHead {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 12px;
+  margin: 24px 0 10px;
 }
 
-.boardFooter .counter {
+.fileListHead h2 {
   margin: 0;
+  font-size: 16px;
 }
 
-/* Trang xem bản chia sẻ */
-
-.pasteCard {
-  margin-top: 36px;
-}
-
-.pasteHeader h1 {
-  margin: 0 0 4px;
-  font-size: clamp(20px, 4vw, 28px);
-  line-height: 1.25;
-  overflow-wrap: anywhere;
-}
-
-.pasteMeta {
-  margin: 0 0 16px;
+.emptyList {
+  margin: 0;
+  padding: 20px;
+  text-align: center;
   color: var(--muted);
-  font-size: 13.5px;
-}
-
-.pasteContent {
-  margin: 16px 0 0;
-  padding: 16px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: #0d1119;
-  font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: 14px;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  overflow-x: auto;
 }
 
-.backRow {
-  margin: 20px 0 0;
+.fileList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fileRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-soft);
+}
+
+.fileIcon {
+  font-size: 20px;
+  flex: none;
+}
+
+.fileInfo {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.fileName {
+  font-weight: 600;
+  font-size: 14.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileMeta {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.fileActions {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+
+.btnSmall {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.btnDanger {
+  color: var(--danger);
+  border-color: rgba(255, 107, 107, 0.35);
+}
+
+.btnDanger:hover {
+  background: rgba(255, 107, 107, 0.12);
 }
 
 /* Trang 404 */
@@ -428,11 +473,12 @@ a:hover {
     display: none;
   }
 
-  .formFooter .btnPrimary {
-    width: 100%;
+  .fileRow {
+    flex-wrap: wrap;
   }
 
-  .expiryField {
+  .fileActions {
     width: 100%;
+    justify-content: flex-end;
   }
 }

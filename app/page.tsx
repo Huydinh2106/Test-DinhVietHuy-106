@@ -1,20 +1,20 @@
-import SharedText from "@/components/SharedText";
-import { getText } from "@/lib/store";
+import FileShare from "@/components/FileShare";
+import { listFiles } from "@/lib/files";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const shared = await getText();
+  const files = await listFiles();
   return (
     <main className="container">
       <section className="hero">
-        <h1>Bảng văn bản chung</h1>
+        <h1>Chia sẻ file</h1>
         <p>
-          Gõ nội dung rồi bấm <strong>Cập nhật</strong>. Ai mở trang này cũng thấy cùng một nội
-          dung, và tự cập nhật sau vài giây — không cần đăng nhập, không cần gửi link.
+          Tải file lên ở máy này, máy khác mở trang là tải xuống được. Không cần đăng nhập, không
+          cần gửi link.
         </p>
       </section>
-      <SharedText initialContent={shared.content} initialUpdatedAt={shared.updatedAt} />
+      <FileShare initialFiles={files} />
     </main>
   );
 }

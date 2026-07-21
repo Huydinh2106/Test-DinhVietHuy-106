@@ -1,14 +1,13 @@
-# ShareText — Bảng văn bản chung
+# ShareFile — Chia sẻ file đơn giản
 
-Một trang web đơn giản chỉ có **một ô văn bản dùng chung**: mở trang, gõ nội dung, bấm **Cập nhật** — ai truy cập cũng thấy đúng nội dung đó. Hợp để chia sẻ nhanh vài dòng text giữa các máy với nhau, không cần đăng nhập, không cần gửi link.
+Một trang web gọn nhẹ để **tải file lên và tải xuống**: mở trang, kéo thả (hoặc chọn) file để tải lên; máy khác mở đúng trang đó là thấy danh sách và tải về được. Hợp để chuyển nhanh file giữa các máy, không cần đăng nhập, không cần gửi link.
 
 ## Tính năng
 
-- **Một nội dung chung cho mọi người**: không có nhiều bản chia sẻ, không có link riêng — chỉ một ô text.
-- **Tự đồng bộ**: các máy đang mở trang tự kéo nội dung mới sau vài giây (chỉ khi tab đang hiển thị và bạn không gõ dở), nên máy kia không cần bấm reload.
-- **Không đè lên nội dung đang gõ**: khi bạn có thay đổi chưa lưu, việc tự đồng bộ tạm dừng để khỏi mất chữ.
+- **Tải lên bằng kéo-thả hoặc chọn file**, hỗ trợ nhiều file cùng lúc.
+- **Danh sách file dùng chung**: ai mở trang cũng thấy cùng danh sách; tự làm mới sau vài giây (khi tab đang hiển thị) nên máy kia không cần reload.
+- **Tải xuống một chạm** và **xoá** file ngay trên danh sách.
 - **Không cần đăng nhập**: không tài khoản, không thu thập thông tin cá nhân.
-- **Sao chép nhanh**: nút sao chép toàn bộ nội dung.
 
 ## Chạy dự án
 
@@ -24,41 +23,46 @@ npm run build
 npm start
 ```
 
-Chạy local không cần cấu hình gì — dữ liệu lưu ra file `.data/shared.json`.
+Chạy local không cần cấu hình gì — file lưu vào thư mục `.data/uploads/`.
 
 ## Deploy
 
-Xem [DEPLOY.md](./DEPLOY.md). Nhanh nhất: import repo vào Vercel rồi thêm Upstash Redis
-trong tab **Storage** (gói miễn phí). App tự dùng Redis khi có biến môi trường Upstash,
-và tự lưu ra file khi không có — nên vừa deploy được serverless, vừa chạy local dễ dàng.
+Xem [DEPLOY.md](./DEPLOY.md). Nhanh nhất: import repo vào Vercel rồi thêm **Vercel Blob**
+trong tab **Storage** (gói miễn phí). App tự dùng Blob khi có `BLOB_READ_WRITE_TOKEN`,
+và tự lưu ra thư mục khi không có — nên vừa deploy được serverless, vừa chạy local dễ dàng.
+
+> Tải file qua máy chủ giới hạn **4,5 MB/file** trên Vercel. Cần file lớn hơn thì chuyển sang
+> tải trực tiếp lên Blob từ trình duyệt (xem DEPLOY.md).
 
 ## Kiến trúc
 
 | Đường dẫn | Vai trò |
 | --- | --- |
-| `app/page.tsx` | Trang chủ (server component), đọc nội dung hiện tại rồi render |
-| `components/SharedText.tsx` | Ô văn bản + nút Cập nhật + tự đồng bộ (client component) |
-| `app/api/text/route.ts` | `GET` đọc nội dung chung, `POST` ghi đè nội dung chung |
-| `lib/store.ts` | Lớp lưu trữ: Redis (Upstash) khi có cấu hình, ngược lại lưu file JSON |
-| `lib/constants.ts` | Hằng số dùng chung cho client + server (giới hạn độ dài) |
-
-Toàn bộ trang chỉ dùng **một khoá lưu trữ duy nhất** (`shared:text` trong Redis, hoặc file
-`.data/shared.json`), chứa nội dung và mốc thời gian cập nhật gần nhất. Mỗi lần bấm Cập nhật là
-ghi đè giá trị đó — ai mở trang sau sẽ thấy nội dung mới nhất.
+| `app/page.tsx` | Trang chủ (server component), đọc danh sách file rồi render |
+| `components/FileShare.tsx` | Vùng kéo-thả + danh sách file + tự làm mới (client component) |
+| `app/api/files/route.ts` | `GET` liệt kê, `POST` tải lên, `DELETE` xoá file |
+| `app/api/files/[name]/route.ts` | Tải xuống cho backend file (local); trên Vercel tải trực tiếp qua URL Blob |
+| `lib/files.ts` | Lớp lưu trữ: Vercel Blob khi có cấu hình, ngược lại lưu file trong `.data/uploads/` |
+| `lib/constants.ts` | Hằng số + tiện ích dùng chung cho client + server (giới hạn dung lượng, định dạng KB/MB) |
 
 ## API
 
-Đọc nội dung hiện tại:
+Liệt kê file:
 
 ```bash
-curl http://localhost:3000/api/text
-# => {"content":"...","updatedAt":1700000000000}
+curl http://localhost:3000/api/files
+# => {"files":[{"name":"...","url":"...","size":123,"uploadedAt":...,"key":"..."}]}
 ```
 
-Ghi đè nội dung:
+Tải lên (multipart form, field tên `file`):
 
 ```bash
-curl -X POST http://localhost:3000/api/text \
-  -H "Content-Type: application/json" \
-  -d '{"content":"Nội dung mới"}'
+curl -F "file=@duong-dan/toi-file.pdf" http://localhost:3000/api/files
+```
+
+Xoá:
+
+```bash
+curl -X DELETE http://localhost:3000/api/files \
+  -H "Content-Type: application/json" -d '{"key":"toi-file.pdf"}'
 ```
