@@ -1,46 +1,58 @@
 # Hướng dẫn deploy ShareText
 
-App lưu dữ liệu ra file trên đĩa (`DATA_DIR`, mặc định trong Docker là `/data/pastes`), vì vậy cần nền tảng chạy **server thật** (không phải serverless). Repo đã có sẵn `Dockerfile` nên các nền tảng bên dưới đều tự nhận diện và build được ngay.
+App tự chọn nơi lưu dữ liệu:
 
-## Cách 1: Railway (khuyên dùng — nhanh nhất, ~5 phút)
+- **Có biến môi trường Upstash Redis** → lưu vào Redis (dùng cho Vercel / serverless).
+- **Không có** → lưu ra file trong thư mục `.data/` (dùng khi chạy local, không cần cấu hình gì).
 
-1. Vào <https://railway.app>, đăng nhập bằng GitHub.
-2. Bấm **New Project** → **Deploy from GitHub repo** → chọn repo này (cấp quyền truy cập repo nếu được hỏi).
-3. Railway tự phát hiện `Dockerfile` và build — không cần cấu hình gì thêm.
-4. Gắn ổ đĩa bền để paste không mất khi redeploy: vào service → tab **Volumes** (hoặc chuột phải vào service → **Attach Volume**) → mount path nhập `/data`.
-5. Vào tab **Settings** → **Networking** → bấm **Generate Domain** → nhận link dạng `https://<tên>.up.railway.app`.
+## Cách 1: Vercel + Upstash Redis (khuyên dùng — miễn phí, ~5 phút)
 
-Xong — mở link là dùng được. (Railway cho gói trial miễn phí; sau đó gói Hobby ~5 USD/tháng.)
+### Bước 1 — Import repo vào Vercel
 
-## Cách 2: Render
+1. Vào <https://vercel.com/new>, đăng nhập bằng GitHub.
+2. Chọn repo này. Vercel tự nhận diện Next.js, không cần chỉnh gì.
+3. Nếu code đang ở nhánh `claude/text-sharing-website-ioyqpv` (chưa merge vào `main`):
+   Vercel sẽ deploy `main` cho bản chính. Hãy vào **Settings → Git → Production Branch**
+   đổi sang nhánh đó, **hoặc** merge nhánh vào `main` trước cho gọn.
 
-1. Vào <https://render.com>, đăng nhập bằng GitHub.
-2. **New** → **Web Service** → chọn repo này. Render tự nhận `Dockerfile`.
-3. Chọn gói và bấm **Deploy Web Service**.
+### Bước 2 — Thêm Upstash Redis (nơi lưu dữ liệu)
 
-Lưu ý: gói **Free** của Render không có đĩa bền — mỗi lần service khởi động lại (hoặc ngủ do không có truy cập) các paste sẽ mất. Muốn giữ dữ liệu: dùng gói Starter và thêm **Disk** với mount path `/data`.
+1. Trong project trên Vercel, mở tab **Storage** → **Create Database** → chọn **Upstash for Redis**.
+2. Đặt tên, chọn region gần bạn → **Create**. Vercel tự gắn database vào project và
+   tự thêm các biến môi trường (`KV_REST_API_URL`, `KV_REST_API_TOKEN`, …) — code đọc được luôn.
+3. Vào tab **Deployments** → **Redeploy** để bản chạy nhận biến môi trường mới.
 
-## Cách 3: VPS / máy chủ riêng có Docker
+Xong — mở domain `*.vercel.app` là dùng được, dữ liệu paste được lưu bền trên Upstash.
+
+> Cách thủ công (nếu không dùng tab Storage): tạo Redis tại
+> <https://console.upstash.com>, vào tab **REST API**, copy `UPSTASH_REDIS_REST_URL` và
+> `UPSTASH_REDIS_REST_TOKEN`, rồi dán vào **Settings → Environment Variables** trên Vercel.
+
+## Cách 2: Chạy Docker (VPS / máy chủ riêng)
+
+App vẫn chạy được kiểu lưu file, không cần Redis:
 
 ```bash
-git clone <repo-url> sharetext && cd sharetext
 docker build -t sharetext .
-docker run -d --name sharetext \
-  -p 80:3000 \
-  -v sharetext-data:/data \
-  --restart unless-stopped \
-  sharetext
+docker run -d --name sharetext -p 80:3000 \
+  -v sharetext-data:/data --restart unless-stopped sharetext
 ```
 
-Mở `http://<ip-máy-chủ>` là chạy. Muốn có HTTPS, đặt Nginx/Caddy làm reverse proxy phía trước (Caddy tự lo chứng chỉ SSL chỉ với 2 dòng cấu hình).
+Muốn dùng Redis thay vì file, truyền thêm:
+`-e UPSTASH_REDIS_REST_URL=... -e UPSTASH_REDIS_REST_TOKEN=...`
 
-## Vì sao chưa deploy được lên Vercel?
+## Cách 3: Railway / Render
 
-Vercel chạy dạng serverless: hệ thống file chỉ đọc và không giữ lại giữa các request, nên kiểu lưu file JSON hiện tại sẽ lỗi/mất dữ liệu. Muốn dùng Vercel cần chuyển lớp lưu trữ (`lib/store.ts`) sang database như Upstash Redis hoặc Vercel Postgres — thay đổi nhỏ, gói gọn trong một file, có thể bổ sung sau nếu cần.
+Cả hai tự nhận `Dockerfile`. Nhớ gắn volume mount vào `/data` để giữ dữ liệu (kiểu lưu file),
+hoặc đặt biến môi trường Upstash để dùng Redis. Xem chi tiết trong lịch sử commit / phần trên.
 
 ## Biến môi trường
 
-| Biến | Mặc định | Ý nghĩa |
+| Biến | Bắt buộc? | Ý nghĩa |
 | --- | --- | --- |
-| `DATA_DIR` | `.data/pastes` (local) / `/data/pastes` (Docker) | Thư mục lưu các bản chia sẻ |
-| `PORT` | `3000` | Cổng server lắng nghe |
+| `UPSTASH_REDIS_REST_URL` | Có, khi deploy serverless (Vercel) | URL REST của Upstash Redis |
+| `UPSTASH_REDIS_REST_TOKEN` | Có, khi deploy serverless (Vercel) | Token REST của Upstash Redis |
+| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | — | Tên biến Vercel tự đặt khi thêm Upstash qua tab Storage (code đọc được thay cho hai biến trên) |
+| `DATA_DIR` | Không | Thư mục lưu file khi *không* dùng Redis (mặc định `.data/pastes`, Docker là `/data/pastes`) |
+
+> Nếu deploy lên Vercel mà **quên** thêm Redis, app sẽ báo lỗi rõ ràng thay vì lưu hụt dữ liệu.

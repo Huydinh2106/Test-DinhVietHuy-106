@@ -25,6 +25,14 @@ npm run build
 npm start
 ```
 
+Chạy local không cần cấu hình gì — dữ liệu lưu ra thư mục `.data/`.
+
+## Deploy
+
+Xem [DEPLOY.md](./DEPLOY.md). Nhanh nhất: import repo vào Vercel rồi thêm Upstash Redis
+trong tab **Storage** (gói miễn phí). App tự dùng Redis khi có biến môi trường Upstash,
+và tự lưu ra file khi không có — nên vừa deploy được serverless, vừa chạy local dễ dàng.
+
 ## Kiến trúc
 
 | Đường dẫn | Vai trò |
