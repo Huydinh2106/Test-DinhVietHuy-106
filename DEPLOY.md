@@ -22,7 +22,7 @@ App tự chọn nơi lưu dữ liệu:
    tự thêm các biến môi trường (`KV_REST_API_URL`, `KV_REST_API_TOKEN`, …) — code đọc được luôn.
 3. Vào tab **Deployments** → **Redeploy** để bản chạy nhận biến môi trường mới.
 
-Xong — mở domain `*.vercel.app` là dùng được, dữ liệu paste được lưu bền trên Upstash.
+Xong — mở domain `*.vercel.app` là dùng được, dữ liệu văn bản được lưu bền trên Upstash.
 
 > Cách thủ công (nếu không dùng tab Storage): tạo Redis tại
 > <https://console.upstash.com>, vào tab **REST API**, copy `UPSTASH_REDIS_REST_URL` và
@@ -53,6 +53,6 @@ hoặc đặt biến môi trường Upstash để dùng Redis. Xem chi tiết tr
 | `UPSTASH_REDIS_REST_URL` | Có, khi deploy serverless (Vercel) | URL REST của Upstash Redis |
 | `UPSTASH_REDIS_REST_TOKEN` | Có, khi deploy serverless (Vercel) | Token REST của Upstash Redis |
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | — | Tên biến Vercel tự đặt khi thêm Upstash qua tab Storage (code đọc được thay cho hai biến trên) |
-| `DATA_DIR` | Không | Thư mục lưu file khi *không* dùng Redis (mặc định `.data/pastes`, Docker là `/data/pastes`) |
+| `DATA_DIR` | Không | Thư mục lưu file khi *không* dùng Redis (mặc định `.data`, Docker là `/data`) |
 
 > Nếu deploy lên Vercel mà **quên** thêm Redis, app sẽ báo lỗi rõ ràng thay vì lưu hụt dữ liệu.

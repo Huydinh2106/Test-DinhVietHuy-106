@@ -16,8 +16,8 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
-# Dữ liệu paste ghi vào /data — mount volume vào đây để không mất khi redeploy.
-ENV DATA_DIR=/data/pastes
+# Dữ liệu ghi vào /data — mount volume vào đây để không mất khi redeploy.
+ENV DATA_DIR=/data
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./

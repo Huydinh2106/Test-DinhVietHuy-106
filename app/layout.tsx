@@ -3,9 +3,9 @@ import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ShareText — Chia sẻ văn bản không cần đăng nhập",
+  title: "ShareText — Bảng văn bản chung",
   description:
-    "Dán văn bản, nhận liên kết chia sẻ ngay lập tức. Không cần đăng nhập, hỗ trợ tự xoá theo thời hạn.",
+    "Một ô văn bản chung: gõ nội dung, bấm Cập nhật, ai mở trang cũng thấy. Không cần đăng nhập.",
 };
 
 export const viewport: Viewport = {
@@ -27,7 +27,7 @@ export default function RootLayout({
             <Link href="/" className="brand">
               <span className="brandMark">📝</span> ShareText
             </Link>
-            <span className="headerNote">Chia sẻ văn bản · Không cần đăng nhập</span>
+            <span className="headerNote">Bảng văn bản chung · Không cần đăng nhập</span>
           </div>
         </header>
         {children}

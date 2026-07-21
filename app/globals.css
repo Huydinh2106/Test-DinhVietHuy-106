@@ -318,6 +318,53 @@ a:hover {
   flex-wrap: wrap;
 }
 
+/* Bảng văn bản chung */
+
+.boardHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.syncDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--muted);
+}
+
+.syncDot.ok {
+  background: #29cc6a;
+}
+
+.syncDot.pending {
+  background: #f5a623;
+}
+
+.syncLabel {
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.boardArea {
+  min-height: 340px;
+}
+
+.boardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.boardFooter .counter {
+  margin: 0;
+}
+
 /* Trang xem bản chia sẻ */
 
 .pasteCard {
