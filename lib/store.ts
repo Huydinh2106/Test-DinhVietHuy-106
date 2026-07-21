@@ -11,7 +11,10 @@ export type Paste = {
   views: number;
 };
 
-const DATA_DIR = path.join(process.cwd(), ".data", "pastes");
+// Khi deploy, đặt biến môi trường DATA_DIR trỏ vào volume bền (ví dụ /data/pastes).
+const DATA_DIR = process.env.DATA_DIR
+  ? path.resolve(process.env.DATA_DIR)
+  : path.join(process.cwd(), ".data", "pastes");
 
 // ID sinh từ base64url nên chỉ chứa các ký tự này; đồng thời chặn path traversal.
 const ID_PATTERN = /^[A-Za-z0-9_-]{4,32}$/;
