@@ -35,19 +35,23 @@ const UPLOAD_DIR = path.join(DATA_DIR, "uploads");
 // Tên file an toàn (chặn path traversal) cho backend file.
 const SAFE_NAME = /^[^/\\]+$/;
 
+// Liệt kê KHÔNG ném lỗi — thiếu backend thì trả rỗng để trang vẫn render.
 export async function listFiles(): Promise<StoredFile[]> {
-  requireBackend();
   if (useBlob) {
-    const { blobs } = await list();
-    return blobs
-      .map((b) => ({
-        name: b.pathname,
-        url: b.url,
-        size: b.size,
-        uploadedAt: new Date(b.uploadedAt).getTime(),
-        key: b.url,
-      }))
-      .sort((a, b) => b.uploadedAt - a.uploadedAt);
+    try {
+      const { blobs } = await list();
+      return blobs
+        .map((b) => ({
+          name: b.pathname,
+          url: b.url,
+          size: b.size,
+          uploadedAt: new Date(b.uploadedAt).getTime(),
+          key: b.url,
+        }))
+        .sort((a, b) => b.uploadedAt - a.uploadedAt);
+    } catch {
+      return [];
+    }
   }
 
   try {

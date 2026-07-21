@@ -1,5 +1,8 @@
 // Hằng số/tiện ích dùng chung cho cả client lẫn server (không import module chỉ-chạy-server).
 
+// Giới hạn độ dài ô văn bản chung.
+export const MAX_TEXT_LENGTH = 100_000;
+
 // Giới hạn cho luồng tải-qua-máy-chủ (backend file, chủ yếu chạy local). File được đọc trọn
 // vào bộ nhớ nên đặt mức vừa phải. Khi bật Vercel Blob, trình duyệt tải thẳng lên Blob và
 // KHÔNG bị giới hạn này — hỗ trợ file lớn như video.

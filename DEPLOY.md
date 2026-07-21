@@ -1,9 +1,23 @@
-# Hướng dẫn deploy ShareFile
+# Hướng dẫn deploy Share
 
-App tự chọn nơi lưu file:
+App có hai tính năng, mỗi tính năng tự chọn nơi lưu:
 
-- **Có Vercel Blob** (`BLOB_READ_WRITE_TOKEN`) → lưu file vào Blob (dùng cho Vercel / serverless).
-- **Không có** → lưu file vào thư mục `.data/uploads/` (dùng khi chạy local, không cần cấu hình gì).
+- **Văn bản chung** → Upstash Redis (`UPSTASH_REDIS_REST_URL`/`TOKEN` hoặc `KV_REST_API_*`); không có thì lưu file `.data/shared.json` (local).
+- **Chia sẻ file** → Vercel Blob (`BLOB_READ_WRITE_TOKEN`); không có thì lưu vào `.data/uploads/` (local).
+
+> Redis được truy cập **phía server**, nên phần văn bản chạy được kể cả khi mạng công ty chặn
+> domain của Upstash. Còn file lớn thì trình duyệt tải **trực tiếp** lên Blob, nên cần domain Blob
+> không bị chặn.
+
+## Trên Vercel cần bật gì
+
+| Tính năng | Tích hợp Storage | Biến môi trường Vercel tự thêm |
+| --- | --- | --- |
+| Văn bản chung | **Upstash for Redis** | `KV_REST_API_URL`, `KV_REST_API_TOKEN` |
+| Chia sẻ file | **Blob** | `BLOB_READ_WRITE_TOKEN` |
+
+Thêm cái nào thì tính năng đó chạy; thiếu thì phần đó báo lỗi rõ ràng khi dùng, không làm hỏng
+phần còn lại. Sau khi thêm, nhớ **Deployments → Redeploy**.
 
 ## Cách 1: Vercel + Vercel Blob (khuyên dùng — miễn phí, ~5 phút)
 

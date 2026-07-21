@@ -3,9 +3,9 @@ import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ShareFile — Chia sẻ file đơn giản",
+  title: "Share — Chia sẻ text & file",
   description:
-    "Tải file lên, máy khác mở trang là tải xuống được. Không cần đăng nhập, không cần gửi link.",
+    "Dán văn bản hoặc tải file lên, máy khác mở trang là thấy ngay. Không cần đăng nhập.",
 };
 
 export const viewport: Viewport = {
@@ -25,15 +25,15 @@ export default function RootLayout({
         <header className="siteHeader">
           <div className="container headerInner">
             <Link href="/" className="brand">
-              <span className="brandMark">📁</span> ShareFile
+              <span className="brandMark">🔗</span> Share
             </Link>
-            <span className="headerNote">Chia sẻ file · Không cần đăng nhập</span>
+            <span className="headerNote">Chia sẻ text &amp; file · Không cần đăng nhập</span>
           </div>
         </header>
         {children}
         <footer className="siteFooter">
           <div className="container">
-            <p>ShareFile — chia sẻ file nhanh, không tài khoản, không rườm rà.</p>
+            <p>Share — chia sẻ text &amp; file nhanh, không tài khoản, không rườm rà.</p>
           </div>
         </footer>
       </body>
