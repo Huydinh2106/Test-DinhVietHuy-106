@@ -1,7 +1,9 @@
 // Hằng số/tiện ích dùng chung cho cả client lẫn server (không import module chỉ-chạy-server).
 
-// Vercel Serverless giới hạn body request 4,5 MB khi tải file qua máy chủ.
-export const MAX_FILE_BYTES = Math.floor(4.5 * 1024 * 1024);
+// Giới hạn cho luồng tải-qua-máy-chủ (backend file, chủ yếu chạy local). File được đọc trọn
+// vào bộ nhớ nên đặt mức vừa phải. Khi bật Vercel Blob, trình duyệt tải thẳng lên Blob và
+// KHÔNG bị giới hạn này — hỗ trợ file lớn như video.
+export const MAX_FORMDATA_BYTES = 100 * 1024 * 1024;
 
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;

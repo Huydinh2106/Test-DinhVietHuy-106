@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { listFiles, saveFile, deleteFile } from "@/lib/files";
-import { MAX_FILE_BYTES, formatBytes } from "@/lib/constants";
+import { MAX_FORMDATA_BYTES, formatBytes } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -24,9 +24,9 @@ export async function POST(request: Request) {
   if (file.size === 0) {
     return NextResponse.json({ error: "File rỗng." }, { status: 400 });
   }
-  if (file.size > MAX_FILE_BYTES) {
+  if (file.size > MAX_FORMDATA_BYTES) {
     return NextResponse.json(
-      { error: `File vượt quá ${formatBytes(MAX_FILE_BYTES)} (giới hạn của Vercel khi tải qua máy chủ).` },
+      { error: `File vượt quá ${formatBytes(MAX_FORMDATA_BYTES)} cho chế độ lưu-file.` },
       { status: 413 },
     );
   }

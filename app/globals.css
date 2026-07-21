@@ -361,6 +361,38 @@ a:hover {
   font-size: 13px;
 }
 
+.progressWrap {
+  margin-top: 14px;
+}
+
+.progressInfo {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.progressName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progressBar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--panel-soft);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+
 .fileListHead {
   display: flex;
   align-items: baseline;

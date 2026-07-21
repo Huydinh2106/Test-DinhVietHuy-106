@@ -1,7 +1,8 @@
 "use client";
 
 import { DragEvent, useCallback, useEffect, useRef, useState } from "react";
-import { MAX_FILE_BYTES, formatBytes } from "@/lib/constants";
+import { upload } from "@vercel/blob/client";
+import { formatBytes } from "@/lib/constants";
 
 export type StoredFile = {
   name: string;
@@ -11,6 +12,13 @@ export type StoredFile = {
   key: string;
 };
 
+type Props = {
+  initialFiles: StoredFile[];
+  blobEnabled: boolean;
+};
+
+type Progress = { name: string; percent: number };
+
 const POLL_MS = 5000;
 
 const timeFormat = new Intl.DateTimeFormat("vi-VN", {
@@ -18,9 +26,10 @@ const timeFormat = new Intl.DateTimeFormat("vi-VN", {
   timeStyle: "short",
 });
 
-export default function FileShare({ initialFiles }: { initialFiles: StoredFile[] }) {
+export default function FileShare({ initialFiles, blobEnabled }: Props) {
   const [files, setFiles] = useState<StoredFile[]>(initialFiles);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState<Progress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -44,6 +53,28 @@ export default function FileShare({ initialFiles }: { initialFiles: StoredFile[]
     return () => clearInterval(timer);
   }, [refresh, uploading]);
 
+  async function uploadOne(file: File) {
+    if (blobEnabled) {
+      // Trình duyệt tải TRỰC TIẾP lên Blob — không qua máy chủ, không giới hạn 4,5 MB.
+      await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/blob-upload",
+        multipart: true,
+        onUploadProgress: ({ percentage }) =>
+          setProgress({ name: file.name, percent: Math.round(percentage) }),
+      });
+    } else {
+      // Local: tải qua máy chủ, lưu ra thư mục.
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/files", { method: "POST", body: fd });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? `Tải lên "${file.name}" thất bại.`);
+      }
+    }
+  }
+
   async function uploadFiles(fileList: FileList | File[]) {
     const items = Array.from(fileList);
     if (items.length === 0) return;
@@ -52,21 +83,17 @@ export default function FileShare({ initialFiles }: { initialFiles: StoredFile[]
     setUploading(true);
     try {
       for (const file of items) {
-        if (file.size > MAX_FILE_BYTES) {
-          setError(`"${file.name}" vượt quá ${formatBytes(MAX_FILE_BYTES)} nên bị bỏ qua.`);
-          continue;
-        }
-        const fd = new FormData();
-        fd.append("file", file);
-        const res = await fetch("/api/files", { method: "POST", body: fd });
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          setError(data.error ?? `Tải lên "${file.name}" thất bại.`);
+        setProgress({ name: file.name, percent: 0 });
+        try {
+          await uploadOne(file);
+        } catch (e) {
+          setError((e as Error).message || `Tải lên "${file.name}" thất bại.`);
         }
       }
       await refresh();
     } finally {
       setUploading(false);
+      setProgress(null);
       if (inputRef.current) inputRef.current.value = "";
     }
   }
@@ -98,7 +125,7 @@ export default function FileShare({ initialFiles }: { initialFiles: StoredFile[]
         className={`dropZone${dragOver ? " dragOver" : ""}`}
         role="button"
         tabIndex={0}
-        onClick={() => inputRef.current?.click()}
+        onClick={() => !uploading && inputRef.current?.click()}
         onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && inputRef.current?.click()}
         onDragOver={(e) => {
           e.preventDefault();
@@ -108,8 +135,13 @@ export default function FileShare({ initialFiles }: { initialFiles: StoredFile[]
         onDrop={onDrop}
       >
         <span className="dropIcon">⬆️</span>
-        <p className="dropTitle">{uploading ? "Đang tải lên…" : "Kéo thả file vào đây, hoặc bấm để chọn"}</p>
-        <p className="dropHint">Tối đa {formatBytes(MAX_FILE_BYTES)} mỗi file · chọn được nhiều file</p>
+        <p className="dropTitle">
+          {uploading ? "Đang tải lên…" : "Kéo thả file vào đây, hoặc bấm để chọn"}
+        </p>
+        <p className="dropHint">
+          {blobEnabled ? "Tải được cả file lớn như video" : "Chế độ lưu-file (local)"} · chọn được
+          nhiều file
+        </p>
         <input
           ref={inputRef}
           type="file"
@@ -118,6 +150,20 @@ export default function FileShare({ initialFiles }: { initialFiles: StoredFile[]
           onChange={(e) => e.target.files && uploadFiles(e.target.files)}
         />
       </div>
+
+      {progress && (
+        <div className="progressWrap">
+          <div className="progressInfo">
+            <span className="progressName" title={progress.name}>
+              {progress.name}
+            </span>
+            <span className="muted">{progress.percent}%</span>
+          </div>
+          <div className="progressBar">
+            <div className="progressFill" style={{ width: `${progress.percent}%` }} />
+          </div>
+        </div>
+      )}
 
       {error && <p className="error">{error}</p>}
 

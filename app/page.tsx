@@ -5,6 +5,8 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const files = await listFiles();
+  // Có Vercel Blob thì trình duyệt tải thẳng lên Blob (file lớn); không thì tải qua máy chủ.
+  const blobEnabled = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
   return (
     <main className="container">
       <section className="hero">
@@ -14,7 +16,7 @@ export default async function Home() {
           cần gửi link.
         </p>
       </section>
-      <FileShare initialFiles={files} />
+      <FileShare initialFiles={files} blobEnabled={blobEnabled} />
     </main>
   );
 }
