@@ -30,13 +30,18 @@ const redisUrl = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_U
 const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
 const redis = redisUrl && redisToken ? new Redis({ url: redisUrl, token: redisToken }) : null;
 
-// Trên Vercel (serverless) mà thiếu Redis thì fallback ra file sẽ mất dữ liệu âm thầm.
-// Báo lỗi rõ ràng thay vì để người dùng tưởng đã lưu được.
-if (!redis && process.env.VERCEL) {
-  throw new Error(
-    "Thiếu cấu hình Upstash Redis. Hãy thêm tích hợp Upstash (Storage) trong Vercel " +
-      "để có UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN, rồi redeploy.",
-  );
+// Chọn backend lúc xử lý request (KHÔNG kiểm tra ở cấp module — nếu throw lúc import,
+// bước "collect page data" khi build trên Vercel sẽ fail dù chỉ đang build).
+// Trên Vercel mà thiếu Redis thì lưu file sẽ mất dữ liệu âm thầm, nên báo lỗi rõ ràng.
+function backendIsRedis(): boolean {
+  if (redis) return true;
+  if (process.env.VERCEL) {
+    throw new Error(
+      "Thiếu cấu hình Upstash Redis. Hãy thêm tích hợp Upstash (Storage) trong Vercel " +
+        "để có UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN, rồi redeploy.",
+    );
+  }
+  return false;
 }
 
 // --- Backend Redis (dùng cho Vercel) ---
@@ -124,7 +129,7 @@ export async function createPaste(input: {
     expiresAt: input.expiresAt,
     views: 0,
   };
-  return redis ? createPasteRedis(paste) : createPasteFile(paste);
+  return backendIsRedis() ? createPasteRedis(paste) : createPasteFile(paste);
 }
 
 export async function getPaste(
@@ -133,5 +138,5 @@ export async function getPaste(
 ): Promise<Paste | null> {
   if (!ID_PATTERN.test(id)) return null;
   const countView = opts.countView ?? false;
-  return redis ? getPasteRedis(id, countView) : getPasteFile(id, countView);
+  return backendIsRedis() ? getPasteRedis(id, countView) : getPasteFile(id, countView);
 }
